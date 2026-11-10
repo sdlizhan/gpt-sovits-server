@@ -337,6 +337,17 @@ def create_streaming_wav_header(sr=32000, num_channels=1, bits_per_sample=16) ->
     )
 
 
+def create_wav_header(data_len: int, sr=32000, num_channels=1, bits_per_sample=16) -> bytes:
+    """RIFF header with real sizes, for non-streaming responses."""
+    byte_rate = sr * num_channels * bits_per_sample // 8
+    block_align = num_channels * bits_per_sample // 8
+    return struct.pack(
+        "<4sI4s4sIHHIIHH4sI",
+        b"RIFF", 36 + data_len, b"WAVE",
+        b"fmt ", 16, 1, num_channels, sr, byte_rate, block_align, bits_per_sample,
+        b"data", data_len
+    )
+
 def load_model():
     """Load GPT-SoVITS V2 Model with CUDA FP16 for native Token-Chunk Streaming."""
     global current_pipeline
@@ -515,7 +526,11 @@ async def generate_speech(req: SpeechRequest, request: Request):
         sample_rate = 32000
         chunk_size_bytes = 3840  # 3840 bytes = 60ms Opus frame equivalent at 32kHz 16-bit mono
 
-        if fmt == "wav":
+        # Non-streaming WAV: buffer the PCM so the header can carry real sizes.
+        buffered_wav = fmt == "wav" and req.stream is False
+        buffered_pcm = bytearray()
+
+        if fmt == "wav" and not buffered_wav:
             yield create_streaming_wav_header(sr=sample_rate, num_channels=1, bits_per_sample=16)
 
         q = asyncio.Queue()
@@ -622,6 +637,12 @@ async def generate_speech(req: SpeechRequest, request: Request):
                         print(f"[{datetime.now().strftime('%H:%M:%S.%f')[:-3]}] [⚡ Fast First-Chunk] [{req_id}] TTFA: {ttfa:.1f} ms!")
                         first_chunk_logged = True
 
+                    if buffered_wav:
+                        total_chunks += 1
+                        buffered_pcm.extend(raw_pcm)
+                        total_bytes += len(raw_pcm)
+                        continue
+
                     # Stream out PCM bytes in chunk_size_bytes
                     for offset in range(0, len(raw_pcm), chunk_size_bytes):
                         sub_chunk = raw_pcm[offset:offset + chunk_size_bytes]
@@ -634,6 +655,10 @@ async def generate_speech(req: SpeechRequest, request: Request):
             audio_dur = total_bytes / float(bytes_per_sec)
             rtf = total_time / max(audio_dur, 0.001)
             print(f"[{datetime.now().strftime('%H:%M:%S.%f')[:-3]}] [Fast Done] [{req_id}] Total: {total_time:.2f}s | Audio: {audio_dur:.2f}s | Chunks: {total_chunks} | RTF: {rtf:.2f}")
+
+            if buffered_wav:
+                yield create_wav_header(len(buffered_pcm), sr=sample_rate, num_channels=1, bits_per_sample=16)
+                yield bytes(buffered_pcm)
 
         except BaseException as e:
             if not isinstance(e, (asyncio.CancelledError, GeneratorExit)):
@@ -667,7 +692,7 @@ async def generate_speech(req: SpeechRequest, request: Request):
         media_type = "audio/wav"
         resp_headers.update({
             "Content-Type": "audio/wav",
-            "X-Stream-Mode": "streaming",
+            "X-Stream-Mode": "buffered" if req.stream is False else "streaming",
             "X-Audio-Sample-Rate": "32000",
         })
     else:

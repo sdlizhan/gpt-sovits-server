@@ -12,4 +12,8 @@ FROM ghcr.io/sdlizhan/gpt-sovits-server:v2
 
 # GPT_SoVITS/AR/modules/lr_schedulers.py imports matplotlib at module scope.
 # onnxruntime backs the G2PW Chinese polyphone model used by the text front-end.
-RUN pip install --no-cache-dir "matplotlib<4" onnxruntime
+# rich enables the Accel (CUDA-graph) AR backend.
+RUN pip install --no-cache-dir "matplotlib<4" onnxruntime rich
+
+# Ship the code fix that writes real RIFF sizes for non-streaming WAV responses.
+COPY server_fast.py /app/server_fast.py

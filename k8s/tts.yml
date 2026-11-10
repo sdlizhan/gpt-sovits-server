@@ -51,7 +51,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
         - name: gpt-sovits
-          image: ghcr.io/sdlizhan/gpt-sovits-server:v2.2
+          image: ghcr.io/sdlizhan/gpt-sovits-server:v2.3
           imagePullPolicy: IfNotPresent
           env:
             - name: TZ

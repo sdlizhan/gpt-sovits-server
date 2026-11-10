@@ -48,6 +48,8 @@ g2p-en
 nltk
 # G2PW polyphone disambiguation for Chinese (GPT_SoVITS/text/g2pw) uses onnxruntime.
 onnxruntime
+# Console/logging backend required by GPT_SoVITS/Accel (CUDA-graph AR inference).
+rich
 
 # --- misc ---
 ffmpeg-python
