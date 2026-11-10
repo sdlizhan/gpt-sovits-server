@@ -7,8 +7,19 @@
 # Requires:
 #   - NVIDIA GPU passed through to the k3s VM
 #   - nvidia-container-toolkit + RuntimeClass "nvidia"
-#   - NVIDIA device plugin (exposes nvidia.com/gpu)
 #   - hostPath data under /home/k3s/data/gpt-sovits
+#
+# Single-GPU node: no NVIDIA device plugin. The pod does not request
+# nvidia.com/gpu; it just runs under the nvidia runtime with all GPUs visible.
+#
+# RuntimeClass is cluster-scoped; k3s usually creates it after
+# nvidia-container-toolkit is installed. Applying it here is idempotent.
+apiVersion: node.k8s.io/v1
+kind: RuntimeClass
+metadata:
+  name: nvidia
+handler: nvidia
+---
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -40,9 +51,8 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
         - name: gpt-sovits
-          image: ghcr.io/sdlizhan/gpt-sovits-server:v2
+          image: ghcr.io/sdlizhan/gpt-sovits-server:v2.1
           imagePullPolicy: IfNotPresent
-          args: ["--host", "0.0.0.0", "--port", "50045"]
           env:
             - name: TZ
               value: Asia/Shanghai
@@ -63,11 +73,9 @@ spec:
             requests:
               cpu: "2"
               memory: "6Gi"
-              nvidia.com/gpu: "1"
             limits:
               cpu: "8"
               memory: "12Gi"
-              nvidia.com/gpu: "1"
           startupProbe:
             httpGet:
               path: /health

@@ -53,3 +53,5 @@ PyYAML
 tqdm
 psutil
 chardet
+# Imported unconditionally by GPT_SoVITS/AR/modules/lr_schedulers.py.
+matplotlib<4

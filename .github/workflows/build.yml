@@ -11,7 +11,7 @@ on:
       tag:
         description: 'Image tag'
         required: true
-        default: 'v2'
+        default: 'v2.1'
 
 permissions:
   contents: read
@@ -51,7 +51,7 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "tag=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
           else
-            echo "tag=v2" >> "$GITHUB_OUTPUT"
+            echo "tag=v2.1" >> "$GITHUB_OUTPUT"
           fi
           echo "image=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
 
