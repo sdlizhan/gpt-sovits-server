@@ -1,0 +1,55 @@
+# Runtime dependencies for the slim GPT-SoVITS v2 inference server.
+# torch / torchaudio are installed separately from the cu128 index (see Dockerfile).
+
+# --- numerics ---
+numpy==1.26.4
+scipy
+numba
+llvmlite
+
+# --- audio ---
+librosa==0.10.2
+soundfile
+soxr
+audioread
+pooch
+resampy
+
+# --- web ---
+fastapi
+uvicorn[standard]
+pydantic==2.10.6
+python-multipart
+
+# --- model stack ---
+transformers>=4.51,<5
+tokenizers
+sentencepiece
+peft<0.18
+pytorch-lightning>=2.4
+torchmetrics==1.5.0
+huggingface-hub
+safetensors
+einops
+rotary-embedding-torch
+x-transformers
+
+# --- text front-end (zh / en) ---
+cython
+cn2an
+pypinyin
+jieba
+jieba-fast
+opencc
+split-lang
+fast-langdetect==1.1.0
+wordsegment
+g2p-en
+nltk
+
+# --- misc ---
+ffmpeg-python
+PyYAML
+tqdm
+psutil
+chardet

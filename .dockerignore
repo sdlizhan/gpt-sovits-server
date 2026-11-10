@@ -1,0 +1,12 @@
+.git
+.github
+.gitignore
+k8s
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/.DS_Store
+# never bake models into the image
+GPT_SoVITS/pretrained_models
+GPT_SoVITS/text/G2PWModel
+GPT_SoVITS/text/ja_userdic

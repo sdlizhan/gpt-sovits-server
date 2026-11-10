@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+.DS_Store
+
+# Models are provided at runtime via hostPath / volumes.
+GPT_SoVITS/pretrained_models/
+GPT_SoVITS/text/G2PWModel/
+GPT_SoVITS/text/ja_userdic/

@@ -1,0 +1,135 @@
+# GPT-SoVITS v2 inference server
+#
+# Cluster-internal only: the Service stays a ClusterIP, there is deliberately
+# no Ingress. Reachable inside the cluster as:
+#   http://gpt-sovits.tts.svc.cluster.local:50045
+#
+# Requires:
+#   - NVIDIA GPU passed through to the k3s VM
+#   - nvidia-container-toolkit + RuntimeClass "nvidia"
+#   - NVIDIA device plugin (exposes nvidia.com/gpu)
+#   - hostPath data under /home/k3s/data/gpt-sovits
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tts
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gpt-sovits
+  namespace: tts
+  labels:
+    app: gpt-sovits
+spec:
+  replicas: 1
+  # Single GPU: never run two pods at once during an update.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: gpt-sovits
+  template:
+    metadata:
+      labels:
+        app: gpt-sovits
+    spec:
+      nodeSelector:
+        location: archlinux
+      runtimeClassName: nvidia
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: gpt-sovits
+          image: ghcr.io/sdlizhan/gpt-sovits-server:v2
+          imagePullPolicy: IfNotPresent
+          args: ["--host", "0.0.0.0", "--port", "50045"]
+          env:
+            - name: TZ
+              value: Asia/Shanghai
+            - name: NVIDIA_VISIBLE_DEVICES
+              value: all
+            - name: NVIDIA_DRIVER_CAPABILITIES
+              value: compute,utility
+            - name: TOKENIZERS_PARALLELISM
+              value: "false"
+            - name: HF_HUB_OFFLINE
+              value: "1"
+            - name: TRANSFORMERS_OFFLINE
+              value: "1"
+          ports:
+            - name: http
+              containerPort: 50045
+          resources:
+            requests:
+              cpu: "2"
+              memory: "6Gi"
+              nvidia.com/gpu: "1"
+            limits:
+              cpu: "8"
+              memory: "12Gi"
+              nvidia.com/gpu: "1"
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 50045
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 50045
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 50045
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            timeoutSeconds: 3
+            failureThreshold: 3
+          volumeMounts:
+            - name: pretrained-models
+              mountPath: /app/GPT_SoVITS/pretrained_models
+              readOnly: true
+            - name: g2pw-model
+              mountPath: /app/GPT_SoVITS/text/G2PWModel
+              readOnly: true
+            - name: voices
+              mountPath: /app/voices
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: pretrained-models
+          hostPath:
+            path: /home/k3s/data/gpt-sovits/pretrained_models
+            type: Directory
+        - name: g2pw-model
+          hostPath:
+            path: /home/k3s/data/gpt-sovits/G2PWModel
+            type: Directory
+        - name: voices
+          hostPath:
+            path: /home/k3s/data/gpt-sovits/voices
+            type: Directory
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gpt-sovits
+  namespace: tts
+  labels:
+    app: gpt-sovits
+spec:
+  type: ClusterIP
+  selector:
+    app: gpt-sovits
+  ports:
+    - name: http
+      port: 50045
+      targetPort: 50045
