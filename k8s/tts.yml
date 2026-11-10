@@ -2,7 +2,7 @@
 #
 # Cluster-internal only: the Service stays a ClusterIP, there is deliberately
 # no Ingress. Reachable inside the cluster as:
-#   http://gpt-sovits.tts.svc.cluster.local:50045
+#   http://gpt-sovits-service.tts.svc.cluster.local:50045
 #
 # Requires:
 #   - NVIDIA GPU passed through to the k3s VM
@@ -28,30 +28,33 @@ metadata:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: gpt-sovits
+  name: gpt-sovits-server
   namespace: tts
   labels:
-    app: gpt-sovits
+    app: gpt-sovits-server
 spec:
   replicas: 1
+  revisionHistoryLimit: 3
+  progressDeadlineSeconds: 1800
   # Single GPU: never run two pods at once during an update.
   strategy:
     type: Recreate
   selector:
     matchLabels:
-      app: gpt-sovits
+      app: gpt-sovits-server
   template:
     metadata:
       labels:
-        app: gpt-sovits
+        app: gpt-sovits-server
     spec:
       nodeSelector:
         location: archlinux
       runtimeClassName: nvidia
+      automountServiceAccountToken: false
       terminationGracePeriodSeconds: 30
       containers:
-        - name: gpt-sovits
-          image: ghcr.io/sdlizhan/gpt-sovits-server:v2.3
+        - name: gpt-sovits-server
+          image: ghcr.io/sdlizhan/gpt-sovits-server:v2.4
           imagePullPolicy: IfNotPresent
           env:
             - name: TZ
@@ -71,11 +74,11 @@ spec:
               containerPort: 50045
           resources:
             requests:
-              cpu: "2"
-              memory: "6Gi"
+              cpu: 500m
+              memory: 4Gi
             limits:
-              cpu: "8"
-              memory: "12Gi"
+              cpu: "4"
+              memory: 6Gi
           startupProbe:
             httpGet:
               path: /health
@@ -129,14 +132,14 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: gpt-sovits
+  name: gpt-sovits-service
   namespace: tts
   labels:
-    app: gpt-sovits
+    app: gpt-sovits-server
 spec:
   type: ClusterIP
   selector:
-    app: gpt-sovits
+    app: gpt-sovits-server
   ports:
     - name: http
       port: 50045

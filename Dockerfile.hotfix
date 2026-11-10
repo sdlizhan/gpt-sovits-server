@@ -6,7 +6,7 @@
 # The canonical build lives in ./Dockerfile. Rebuild from that file once the
 # node's uplink to ghcr.io is fast enough to pull the full venv layer again.
 #
-#   docker build -f Dockerfile.hotfix -t ghcr.io/sdlizhan/gpt-sovits-server:v2.1 .
+#   docker build -f Dockerfile.hotfix -t ghcr.io/sdlizhan/gpt-sovits-server:v2.4 .
 
 FROM ghcr.io/sdlizhan/gpt-sovits-server:v2
 
@@ -14,3 +14,6 @@ FROM ghcr.io/sdlizhan/gpt-sovits-server:v2
 # onnxruntime backs the G2PW Chinese polyphone model used by the text front-end.
 # rich enables the Accel (CUDA-graph) AR backend.
 RUN pip install --no-cache-dir "matplotlib<4" onnxruntime rich
+
+# Ship the health-probe access-log filter without rebuilding the 4 GiB venv layer.
+COPY server_fast.py /app/server_fast.py

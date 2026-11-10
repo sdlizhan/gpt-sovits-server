@@ -61,6 +61,10 @@ class CleanStdoutFilter:
             if not st:
                 continue
 
+            # kubelet probes hit /health every few seconds; keep them out of the log.
+            if "GET /health HTTP" in st or "GET / HTTP" in st:
+                continue
+
             # Allow our formatted server logs, uvicorn access logs, banners, and real errors
             allow = (
                 st.startswith("[") or
@@ -335,6 +339,7 @@ def create_streaming_wav_header(sr=32000, num_channels=1, bits_per_sample=16) ->
         b"fmt ", 16, 1, num_channels, sr, byte_rate, block_align, bits_per_sample,
         b"data", 0x7fffffff
     )
+
 
 def load_model():
     """Load GPT-SoVITS V2 Model with CUDA FP16 for native Token-Chunk Streaming."""

@@ -43,7 +43,7 @@ Model weights are **not** baked in. They are mounted from the host at runtime:
 Automatically built by GitHub Actions on push to `main`:
 
 ```text
-ghcr.io/sdlizhan/gpt-sovits-server:v2.3
+ghcr.io/sdlizhan/gpt-sovits-server:v2.4
 ```
 
 Push builds publish `edge`; release tags are created explicitly (see
@@ -52,7 +52,7 @@ Push builds publish `edge`; release tags are created explicitly (see
 Manual build:
 
 ```bash
-docker build -t ghcr.io/sdlizhan/gpt-sovits-server:v2.3 .
+docker build -t ghcr.io/sdlizhan/gpt-sovits-server:v2.4 .
 ```
 
 ## Deploy
@@ -60,24 +60,24 @@ docker build -t ghcr.io/sdlizhan/gpt-sovits-server:v2.3 .
 ```bash
 kubectl apply -f k8s/tts.yml
 kubectl -n tts get pods -o wide
-kubectl -n tts logs deploy/gpt-sovits -f
+kubectl -n tts logs deploy/gpt-sovits-server -f
 ```
 
 In-cluster endpoint:
 
 ```text
-http://gpt-sovits.tts.svc.cluster.local:50045
+http://gpt-sovits-service.tts.svc.cluster.local:50045
 ```
 
 There is intentionally **no Ingress**. From outside the cluster use
-`kubectl -n tts port-forward svc/gpt-sovits 50045:50045`.
+`kubectl -n tts port-forward svc/gpt-sovits-service 50045:50045`.
 
 ## API
 
 ```bash
-curl -s http://gpt-sovits.tts.svc.cluster.local:50045/health
-curl -s http://gpt-sovits.tts.svc.cluster.local:50045/v1/audio/voices
-curl -s -X POST http://gpt-sovits.tts.svc.cluster.local:50045/v1/audio/speech \
+curl -s http://gpt-sovits-service.tts.svc.cluster.local:50045/health
+curl -s http://gpt-sovits-service.tts.svc.cluster.local:50045/v1/audio/voices
+curl -s -X POST http://gpt-sovits-service.tts.svc.cluster.local:50045/v1/audio/speech \
   -H 'Content-Type: application/json' \
   -d '{"input":"该吃药了","voice":"female_nurse","response_format":"wav"}' \
   --output out.wav
