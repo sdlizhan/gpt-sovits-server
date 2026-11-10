@@ -11,4 +11,5 @@
 FROM ghcr.io/sdlizhan/gpt-sovits-server:v2
 
 # GPT_SoVITS/AR/modules/lr_schedulers.py imports matplotlib at module scope.
-RUN pip install --no-cache-dir "matplotlib<4"
+# onnxruntime backs the G2PW Chinese polyphone model used by the text front-end.
+RUN pip install --no-cache-dir "matplotlib<4" onnxruntime

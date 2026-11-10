@@ -46,6 +46,8 @@ fast-langdetect==1.1.0
 wordsegment
 g2p-en
 nltk
+# G2PW polyphone disambiguation for Chinese (GPT_SoVITS/text/g2pw) uses onnxruntime.
+onnxruntime
 
 # --- misc ---
 ffmpeg-python
