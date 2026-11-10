@@ -43,13 +43,16 @@ Model weights are **not** baked in. They are mounted from the host at runtime:
 Automatically built by GitHub Actions on push to `main`:
 
 ```text
-ghcr.io/sdlizhan/gpt-sovits-server:v2
+ghcr.io/sdlizhan/gpt-sovits-server:v2.3
 ```
+
+Push builds publish `edge`; release tags are created explicitly (see
+`.github/workflows/build.yml` and `.github/workflows/hotfix.yml`).
 
 Manual build:
 
 ```bash
-docker build -t ghcr.io/sdlizhan/gpt-sovits-server:v2 .
+docker build -t ghcr.io/sdlizhan/gpt-sovits-server:v2.3 .
 ```
 
 ## Deploy
@@ -89,5 +92,6 @@ installed in this slim image and will fail.
   image and never depend on registry DNS.
 - `strategy: Recreate` avoids two pods competing for the single GPU.
 - GPU prerequisites: PCIe passthrough to the k3s VM, `nvidia-open`,
-  `nvidia-container-toolkit`, RuntimeClass `nvidia`, NVIDIA device plugin.
+  `nvidia-container-toolkit`, RuntimeClass `nvidia`. No NVIDIA device plugin
+  is used: the pod runs under the `nvidia` runtime with all GPUs visible.
 - `speed` is applied inside the model sampler, so no `ffmpeg` binary is needed.
