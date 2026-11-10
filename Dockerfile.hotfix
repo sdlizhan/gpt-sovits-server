@@ -1,0 +1,14 @@
+# syntax=docker/dockerfile:1
+#
+# TEMPORARY image used to ship a small dependency fix on top of an existing
+# release without re-downloading the 4.1 GiB venv layer.
+#
+# The canonical build lives in ./Dockerfile. Rebuild from that file once the
+# node's uplink to ghcr.io is fast enough to pull the full venv layer again.
+#
+#   docker build -f Dockerfile.hotfix -t ghcr.io/sdlizhan/gpt-sovits-server:v2.1 .
+
+FROM ghcr.io/sdlizhan/gpt-sovits-server:v2
+
+# GPT_SoVITS/AR/modules/lr_schedulers.py imports matplotlib at module scope.
+RUN pip install --no-cache-dir "matplotlib<4"

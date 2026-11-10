@@ -6,12 +6,14 @@ on:
     paths-ignore:
       - 'k8s/**'
       - '*.md'
+      - 'Dockerfile.hotfix'
+      - '.github/workflows/hotfix.yml'
   workflow_dispatch:
     inputs:
       tag:
         description: 'Image tag'
         required: true
-        default: 'v2.1'
+        default: 'v2'
 
 permissions:
   contents: read
@@ -51,7 +53,7 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "tag=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
           else
-            echo "tag=v2.1" >> "$GITHUB_OUTPUT"
+            echo "tag=edge" >> "$GITHUB_OUTPUT"
           fi
           echo "image=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
 
