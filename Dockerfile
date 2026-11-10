@@ -34,11 +34,15 @@ RUN apt-get update \
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:${PATH}"
 
+# torch + CUDA wheels live in their own layer: they are the bulk of the image
+# and rarely change, so a requirements-only change does not force nodes to
+# re-download ~4 GiB.
+RUN pip install --upgrade pip setuptools wheel \
+ && pip install "torch==${TORCH_VERSION}" "torchaudio==${TORCH_VERSION}" --index-url "${CUDA_INDEX}"
+
 COPY requirements.txt /tmp/requirements.txt
 
-RUN pip install --upgrade pip setuptools wheel \
- && pip install "torch==${TORCH_VERSION}" "torchaudio==${TORCH_VERSION}" --index-url "${CUDA_INDEX}" \
- && pip install -r /tmp/requirements.txt
+RUN pip install -r /tmp/requirements.txt
 
 # NLTK data used by g2p_en (English fallback). Harmless if English is unused.
 RUN python -m nltk.downloader -d /usr/local/share/nltk_data \
